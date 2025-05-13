@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Converter
@@ -17,7 +18,7 @@ public class ListToStringConverter implements AttributeConverter<List<String>, S
     @Override
     public String convertToDatabaseColumn(List<String> attribute) {
         if (attribute == null) {
-            throw new IllegalArgumentException("List cannot be null");
+            return "[]";
         }
         
         try {
@@ -29,8 +30,8 @@ public class ListToStringConverter implements AttributeConverter<List<String>, S
 
     @Override
     public List<String> convertToEntityAttribute(String dbData) {
-        if (dbData == null) {
-            throw new IllegalArgumentException("JSON string cannot be null");
+        if (dbData == null || dbData.isBlank()) {
+            return Collections.emptyList();
         }
         
         try {
