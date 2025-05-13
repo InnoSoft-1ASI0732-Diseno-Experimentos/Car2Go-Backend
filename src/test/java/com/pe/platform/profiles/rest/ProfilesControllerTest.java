@@ -1,4 +1,4 @@
-package com.pe.platform.profile.interfaces.rest;
+package com.pe.platform.profiles.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pe.platform.iam.infrastructure.authorization.sfs.model.UserDetailsImpl;
