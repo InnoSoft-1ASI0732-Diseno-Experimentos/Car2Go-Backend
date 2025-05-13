@@ -100,7 +100,7 @@ public class Vehicle {
     @JsonManagedReference
     private List<Review> reviews;
 
-    protected Vehicle() {}
+    public Vehicle() {}
 
     public Vehicle(CreateVehicleCommand command) {
         this.name = command.name();
