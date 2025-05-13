@@ -16,6 +16,10 @@ public class ListToStringConverter implements AttributeConverter<List<String>, S
 
     @Override
     public String convertToDatabaseColumn(List<String> attribute) {
+        if (attribute == null) {
+            throw new IllegalArgumentException("List cannot be null");
+        }
+        
         try {
             return objectMapper.writeValueAsString(attribute);
         } catch (JsonProcessingException e) {
@@ -25,6 +29,10 @@ public class ListToStringConverter implements AttributeConverter<List<String>, S
 
     @Override
     public List<String> convertToEntityAttribute(String dbData) {
+        if (dbData == null) {
+            throw new IllegalArgumentException("JSON string cannot be null");
+        }
+        
         try {
             return Arrays.asList(objectMapper.readValue(dbData, String[].class));
         } catch (IOException e) {
