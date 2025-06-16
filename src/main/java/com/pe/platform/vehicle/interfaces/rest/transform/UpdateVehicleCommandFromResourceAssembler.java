@@ -4,29 +4,38 @@ import com.pe.platform.vehicle.domain.model.commands.UpdateVehicleCommand;
 import com.pe.platform.vehicle.domain.model.valueobjects.vehicleStatus;
 import com.pe.platform.vehicle.interfaces.rest.resources.UpdateVehicleResource;
 
+/**
+ * The type Update vehicle command from resource assembler.
+ */
 public class UpdateVehicleCommandFromResourceAssembler {
 
-    public static UpdateVehicleCommand toCommandFromResource(UpdateVehicleResource resource) {
-        return new UpdateVehicleCommand(
-                resource.name(),
-                resource.phone(),
-                resource.email(),
-                resource.brand(),
-                resource.model(),
-                resource.color(),
-                resource.year(),
-                resource.price(),
-                resource.transmission(),
-                resource.engine(),
-                resource.mileage(),
-                resource.doors(),
-                resource.plate(),
-                resource.location(),
-                resource.description(),
-                resource.images(),
-                resource.fuel(),
-                resource.speed(),
-                vehicleStatus.valueOf(resource.status().toUpperCase())
-        );
-    }
+  /**
+   * To command from resource update vehicle command.
+   *
+   * @param resource the resource
+   * @return the update vehicle command
+   */
+  public static UpdateVehicleCommand toCommandFromResource(UpdateVehicleResource resource) {
+    return new UpdateVehicleCommand(
+        resource.name(),
+        resource.phone(),
+        resource.email(),
+        resource.brand(),
+        resource.model(),
+        resource.color(),
+        resource.year(),
+        resource.price(),
+        resource.transmission(),
+        resource.engine(),
+        resource.mileage(),
+        resource.doors(),
+        resource.plate(),
+        resource.location(),
+        resource.description(),
+        resource.images(),
+        resource.fuel(),
+        resource.speed(),
+        vehicleStatus.valueOf(resource.status().toUpperCase())
+    );
+  }
 }

@@ -8,32 +8,51 @@ import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * The type Payment method.
+ */
 @Entity
 @Getter
 @NoArgsConstructor
 public class PaymentMethod {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(description = "ID", accessMode = Schema.AccessMode.READ_ONLY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Schema(description = "ID", accessMode = Schema.AccessMode.READ_ONLY)
+  private Long id;
 
-    @Schema(description = "Payment Method", example = "BBVA")
-    private String type;
+  @Schema(description = "Payment Method", example = "BBVA")
+  private String type;
 
-    @Schema(description = "Account Number", example = "12345678912345678912")
-    private String details;
+  @Schema(description = "Account Number", example = "12345678912345678912")
+  private String details;
 
-    public PaymentMethod(String type, String details) {
-        this.type = type;
-        this.details = details;
-    }
+  /**
+   * Instantiates a new Payment method.
+   *
+   * @param type    the type
+   * @param details the details
+   */
+  public PaymentMethod(String type, String details) {
+    this.type = type;
+    this.details = details;
+  }
 
-    public void setType(String type) {
-        this.type = type;
-    }
+  /**
+   * Sets type.
+   *
+   * @param type the type
+   */
+  public void setType(String type) {
+    this.type = type;
+  }
 
-    public void setDetails(String details) {
-        this.details = details;
-    }
+  /**
+   * Sets details.
+   *
+   * @param details the details
+   */
+  public void setDetails(String details) {
+    this.details = details;
+  }
 }

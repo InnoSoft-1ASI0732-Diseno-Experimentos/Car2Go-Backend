@@ -2,15 +2,13 @@ package com.pe.platform.iam.infrastructure.authorization.sfs.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.pe.platform.iam.domain.model.aggregates.User;
-
+import java.util.Collection;
+import java.util.stream.Collectors;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.util.Collection;
-import java.util.stream.Collectors;
 
 /**
  * This class is responsible for providing the user details to the Spring Security framework.
@@ -19,58 +17,93 @@ import java.util.stream.Collectors;
 @Getter
 @EqualsAndHashCode
 public class UserDetailsImpl implements UserDetails {
-    private final Long id; // Add this line
+  private final Long id; // Add this line
 
-    private final String username;
-    @JsonIgnore
-    private final String password;
-    private final boolean accountNonExpired;
-    private final boolean accountNonLocked;
-    private final boolean credentialsNonExpired;
-    private final boolean enabled;
-    private final Collection<? extends GrantedAuthority> authorities;
+  private final String username;
+  @JsonIgnore
+  private final String password;
+  private final boolean accountNonExpired;
+  private final boolean accountNonLocked;
+  private final boolean credentialsNonExpired;
+  private final boolean enabled;
+  private final Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(Long id, String username, String password,
-                           Collection<? extends GrantedAuthority> authorities) {
-        this.id = id;
-        this.username = username;
-        this.password = password;
-        this.authorities = authorities;
-        this.accountNonExpired = true;
-        this.accountNonLocked = true;
-        this.credentialsNonExpired = true;
-        this.enabled = true;
-    }
+  /**
+   * Instantiates a new User details.
+   *
+   * @param id          the id
+   * @param username    the username
+   * @param password    the password
+   * @param authorities the authorities
+   */
+  public UserDetailsImpl(Long id, String username, String password,
+                         Collection<? extends GrantedAuthority> authorities) {
+    this.id = id;
+    this.username = username;
+    this.password = password;
+    this.authorities = authorities;
+    this.accountNonExpired = true;
+    this.accountNonLocked = true;
+    this.credentialsNonExpired = true;
+    this.enabled = true;
+  }
 
-    /**
-     * This method is responsible for building the UserDetailsImpl object from the User object.
-     * @param user The user object.
-     * @return The UserDetailsImpl object.
-     */
-    public static UserDetailsImpl build(User user) {
-        var authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getStringName()))
-                .collect(Collectors.toList());
-        return new UserDetailsImpl(user.getId(), user.getUsername(), user.getPassword(), authorities); // Modify this line
-    }
+  /**
+   * This method is responsible for building the UserDetailsImpl object from the User object.
+   *
+   * @param user The user object.
+   * @return The UserDetailsImpl object.
+   */
+  public static UserDetailsImpl build(User user) {
+    var authorities = user.getRoles().stream()
+        .map(role -> new SimpleGrantedAuthority(role.getStringName()))
+        .collect(Collectors.toList());
+    return new UserDetailsImpl(user.getId(), user.getUsername(), user.getPassword(),
+        authorities); // Modify this line
+  }
 
-    public boolean isSeller() {
-        return authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_SELLER"));
-    }
+  /**
+   * Is seller boolean.
+   *
+   * @return the boolean
+   */
+  public boolean isSeller() {
+    return authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_SELLER"));
+  }
 
-    public boolean isAdmin() {
-        return authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-    }
+  /**
+   * Is admin boolean.
+   *
+   * @return the boolean
+   */
+  public boolean isAdmin() {
+    return authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+  }
 
-    public boolean isOwner() {
-        return authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-    }
+  /**
+   * Is owner boolean.
+   *
+   * @return the boolean
+   */
+  public boolean isOwner() {
+    return authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+  }
 
-    public boolean isFarmWorker() {
-        return authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_FARMWORKER"));
-    }
+  /**
+   * Is farm worker boolean.
+   *
+   * @return the boolean
+   */
+  public boolean isFarmWorker() {
+    return authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_FARMWORKER"));
+  }
 
-    public Long getUserDetailsId(){
-        return this.id;
-    }
+  /**
+   * Gets user details id.
+   *
+   * @return the user details id
+   */
+  public Long getUserDetailsId() {
+    return this.id;
+  }
 }

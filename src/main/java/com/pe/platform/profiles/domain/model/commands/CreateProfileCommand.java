@@ -1,5 +1,8 @@
 package com.pe.platform.profiles.domain.model.commands;
 
+/**
+ * The type Create profile command.
+ */
 public record CreateProfileCommand(String firstName,
                                    String lastName,
                                    String email,
@@ -8,19 +11,30 @@ public record CreateProfileCommand(String firstName,
                                    String address,
                                    String phone) {
 
-    public CreateProfileCommand {
-        validateNonEmpty(firstName, "First name");
-        validateNonEmpty(lastName, "Last name");
-        validateNonEmpty(email, "Email");
-        validateNonEmpty(dni, "DNI");
-        validateNonEmpty(address, "Address");
-        validateNonEmpty(image, "Image");
-        validateNonEmpty(phone, "Phone number");
-    }
+  /**
+   * Instantiates a new Create profile command.
+   *
+   * @param firstName the first name
+   * @param lastName  the last name
+   * @param email     the email
+   * @param image     the image
+   * @param dni       the dni
+   * @param address   the address
+   * @param phone     the phone
+   */
+  public CreateProfileCommand {
+    validateNonEmpty(firstName, "First name");
+    validateNonEmpty(lastName, "Last name");
+    validateNonEmpty(email, "Email");
+    validateNonEmpty(dni, "DNI");
+    validateNonEmpty(address, "Address");
+    validateNonEmpty(image, "Image");
+    validateNonEmpty(phone, "Phone number");
+  }
 
-    private static void validateNonEmpty(String value, String fieldName) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(fieldName + " cannot be null or blank");
-        }
+  private static void validateNonEmpty(String value, String fieldName) {
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException(fieldName + " cannot be null or blank");
     }
+  }
 }

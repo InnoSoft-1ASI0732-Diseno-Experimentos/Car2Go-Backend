@@ -1,38 +1,57 @@
 package com.pe.platform.interaction.domain.model.aggregates;
 
-import com.pe.platform.vehicle.domain.model.aggregates.Vehicle; // Si tienes el vehículo en otro módulo
-import jakarta.persistence.*;
+import com.pe.platform.vehicle.domain.model.aggregates.Vehicle;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
-import java.time.LocalDateTime;
 
+/**
+ * The type Favorite.
+ */
 @Getter
 @Setter
 @Entity
 @Table(name = "favorites")
 public class Favorite {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private int id;
 
-    @ManyToOne
-    @JoinColumn(name = "vehicle_id", nullable = false)
-    private Vehicle vehicle;
+  @ManyToOne
+  @JoinColumn(name = "vehicle_id", nullable = false)
+  private Vehicle vehicle;
 
-    @Column(nullable = false)
-    private long profileId;
+  @Column(nullable = false)
+  private long profileId;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+  @Column(nullable = false)
+  private LocalDateTime createdAt;
 
-    public Favorite() {
+  /**
+   * Instantiates a new Favorite.
+   */
+  public Favorite() {
 
-    }
+  }
 
-    public Favorite(Vehicle vehicle, long profileId) {
-        this.vehicle = vehicle;
-        this.profileId = profileId;
-        this.createdAt = LocalDateTime.now();
-    }
+  /**
+   * Instantiates a new Favorite.
+   *
+   * @param vehicle   the vehicle
+   * @param profileId the profile id
+   */
+  public Favorite(Vehicle vehicle, long profileId) {
+    this.vehicle = vehicle;
+    this.profileId = profileId;
+    this.createdAt = LocalDateTime.now();
+  }
 }

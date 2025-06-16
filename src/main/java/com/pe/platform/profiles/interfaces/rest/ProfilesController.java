@@ -14,147 +14,218 @@ import com.pe.platform.profiles.interfaces.rest.resources.UpdateProfileResource;
 import com.pe.platform.profiles.interfaces.rest.transform.CreateProfileCommandFromResourceAssembler;
 import com.pe.platform.profiles.interfaces.rest.transform.ProfileResourceFromEntityAssembler;
 import com.pe.platform.profiles.interfaces.rest.transform.UpdateProfileCommandFromResource;
+import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Optional;
-
+/**
+ * The type Profiles controller.
+ */
 @RestController
 @RequestMapping("/api/v1/profiles")
 public class ProfilesController {
-    private final ProfileCommandServiceImpl profileCommandService;
-    private final ProfileQueryServiceImpl profileQueryService;
+  private final ProfileCommandServiceImpl profileCommandService;
+  private final ProfileQueryServiceImpl profileQueryService;
 
-    public ProfilesController(ProfileCommandServiceImpl profileCommandService, ProfileQueryServiceImpl profileQueryService) {
-        this.profileCommandService = profileCommandService;
-        this.profileQueryService = profileQueryService;
+  /**
+   * Instantiates a new Profiles controller.
+   *
+   * @param profileCommandService the profile command service
+   * @param profileQueryService   the profile query service
+   */
+  public ProfilesController(ProfileCommandServiceImpl profileCommandService,
+                            ProfileQueryServiceImpl profileQueryService) {
+    this.profileCommandService = profileCommandService;
+    this.profileQueryService = profileQueryService;
+  }
+
+  /**
+   * Create profile response entity.
+   *
+   * @param resource the resource
+   * @return the response entity
+   */
+  @PostMapping
+  public ResponseEntity<ProfileResource> createProfile(
+      @RequestBody CreateProfileResource resource) {
+    CreateProfileCommand createProfileCommand =
+        CreateProfileCommandFromResourceAssembler.toCommandFromResource(resource);
+    Optional<Profile> profile = profileCommandService.handle(createProfileCommand);
+    if (profile.isEmpty()) {
+      return ResponseEntity.badRequest().build();
+    }
+    ProfileResource profileResource =
+        ProfileResourceFromEntityAssembler.toResourceFromEntity(profile.get());
+    return ResponseEntity.ok(profileResource);
+  }
+
+  /**
+   * Gets my profile.
+   *
+   * @return the my profile
+   */
+  @GetMapping("/me")
+  public ResponseEntity<ProfileResource> getMyProfile() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+    var getProfileByIdQuery = new GetProfileByIdQuery(userDetails.getId());
+    var profile = profileQueryService.handle(getProfileByIdQuery);
+    if (profile.isEmpty()) {
+      return ResponseEntity.notFound().build();
+    }
+    var profileResource = ProfileResourceFromEntityAssembler.toResourceFromEntity(profile.get());
+    return ResponseEntity.ok(profileResource);
+  }
+
+  /**
+   * Update profile response entity.
+   *
+   * @param resource the resource
+   * @return the response entity
+   */
+  @PutMapping("/me/edit")
+  public ResponseEntity<ProfileResource> updateProfile(
+      @RequestBody UpdateProfileResource resource) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    long userId = userDetails.getId();
+
+    UpdateProfileCommand updateProfileCommand =
+        UpdateProfileCommandFromResource.toCommandFromResource(resource);
+    Optional<Profile> updatedProfileOptional = profileCommandService.handle(updateProfileCommand);
+
+    return updatedProfileOptional
+        .filter(updatedProfile -> updatedProfile.getProfileId() == userId)
+        .map(updatedProfile -> ResponseEntity.ok(
+            ProfileResourceFromEntityAssembler.toResourceFromEntity(updatedProfile)))
+        .orElseGet(() -> ResponseEntity.notFound().build());
+  }
+
+  /**
+   * Add payment method response entity.
+   *
+   * @param paymentMethod the payment method
+   * @return the response entity
+   */
+  @PreAuthorize("hasAuthority('ROLE_SELLER')")
+  @PutMapping("/me/payment-methods/add")
+  public ResponseEntity<?> addPaymentMethod(@RequestBody PaymentMethod paymentMethod) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    long userId = userDetails.getId();
+
+    Optional<Profile> profileOptional = profileQueryService.handle(new GetProfileByIdQuery(userId));
+    if (profileOptional.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body("Profile not found for user with ID: " + userId);
     }
 
-    @PostMapping
-    public ResponseEntity<ProfileResource> createProfile(@RequestBody CreateProfileResource resource) {
-        CreateProfileCommand createProfileCommand = CreateProfileCommandFromResourceAssembler.toCommandFromResource(resource);
-        Optional<Profile> profile = profileCommandService.handle(createProfileCommand);
-        if (profile.isEmpty()) return ResponseEntity.badRequest().build();
-        ProfileResource profileResource = ProfileResourceFromEntityAssembler.toResourceFromEntity(profile.get());
-        return ResponseEntity.ok(profileResource);
+    Profile profile = profileOptional.get();
+
+    if (profile.getPaymentMethods().size() >= 3) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body("Cannot add more than 3 payment methods");
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<ProfileResource> getMyProfile() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    profile.addPaymentMethod(paymentMethod);
+    profileCommandService.save(profile);
 
-        var getProfileByIdQuery = new GetProfileByIdQuery(userDetails.getId());
-        var profile = profileQueryService.handle(getProfileByIdQuery);
-        if (profile.isEmpty()) return ResponseEntity.notFound().build();
-        var profileResource = ProfileResourceFromEntityAssembler.toResourceFromEntity(profile.get());
-        return ResponseEntity.ok(profileResource);
+    ProfileResource profileResource =
+        ProfileResourceFromEntityAssembler.toResourceFromEntity(profile);
+    return ResponseEntity.ok(profileResource);
+  }
+
+
+  /**
+   * Edit payment method response entity.
+   *
+   * @param paymentMethodId      the payment method id
+   * @param updatedPaymentMethod the updated payment method
+   * @return the response entity
+   */
+  @PreAuthorize("hasAuthority('ROLE_SELLER')")
+  @PutMapping("/me/payment-methods/edit/{paymentMethodId}")
+  public ResponseEntity<?> editPaymentMethod(@PathVariable Long paymentMethodId,
+                                             @RequestBody PaymentMethod updatedPaymentMethod) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    long userId = userDetails.getId();
+
+    Optional<Profile> profileOptional = profileQueryService.handle(new GetProfileByIdQuery(userId));
+    if (profileOptional.isEmpty()) {
+      return ResponseEntity.notFound().build();
     }
 
-    @PutMapping("/me/edit")
-    public ResponseEntity<ProfileResource> updateProfile(@RequestBody UpdateProfileResource resource) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        long userId = userDetails.getId();
+    Profile profile = profileOptional.get();
+    boolean updated = profile.updatePaymentMethod(paymentMethodId, updatedPaymentMethod);
 
-        UpdateProfileCommand updateProfileCommand = UpdateProfileCommandFromResource.toCommandFromResource(resource);
-        Optional<Profile> updatedProfileOptional = profileCommandService.handle(updateProfileCommand);
-
-        return updatedProfileOptional
-                .filter(updatedProfile -> updatedProfile.getProfileId() == userId)
-                .map(updatedProfile -> ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(updatedProfile)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    if (!updated) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment method not found");
     }
 
-    @PreAuthorize("hasAuthority('ROLE_SELLER')")
-    @PutMapping("/me/payment-methods/add")
-    public ResponseEntity<?> addPaymentMethod(@RequestBody PaymentMethod paymentMethod) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        long userId = userDetails.getId();
+    profileCommandService.save(profile);
+    return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(profile));
+  }
 
-        Optional<Profile> profileOptional = profileQueryService.handle(new GetProfileByIdQuery(userId));
-        if (profileOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Profile not found for user with ID: " + userId);
-        }
+  /**
+   * Delete payment method response entity.
+   *
+   * @param paymentMethodId the payment method id
+   * @return the response entity
+   */
+  @PreAuthorize("hasAuthority('ROLE_SELLER')")
+  @DeleteMapping("/me/payment-methods/delete/{paymentMethodId}")
+  public ResponseEntity<?> deletePaymentMethod(@PathVariable Long paymentMethodId) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    long userId = userDetails.getId();
 
-        Profile profile = profileOptional.get();
-
-        if (profile.getPaymentMethods().size() >= 3) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Cannot add more than 3 payment methods");
-        }
-
-        profile.addPaymentMethod(paymentMethod);
-        profileCommandService.save(profile);
-
-        ProfileResource profileResource = ProfileResourceFromEntityAssembler.toResourceFromEntity(profile);
-        return ResponseEntity.ok(profileResource);
+    Optional<Profile> profileOptional = profileQueryService.handle(new GetProfileByIdQuery(userId));
+    if (profileOptional.isEmpty()) {
+      return ResponseEntity.notFound().build();
     }
 
+    Profile profile = profileOptional.get();
+    boolean removed = profile.removePaymentMethodById(paymentMethodId);
 
-    @PreAuthorize("hasAuthority('ROLE_SELLER')")
-    @PutMapping("/me/payment-methods/edit/{paymentMethodId}")
-    public ResponseEntity<?> editPaymentMethod(@PathVariable Long paymentMethodId, @RequestBody PaymentMethod updatedPaymentMethod) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        long userId = userDetails.getId();
-
-        Optional<Profile> profileOptional = profileQueryService.handle(new GetProfileByIdQuery(userId));
-        if (profileOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Profile profile = profileOptional.get();
-        boolean updated = profile.updatePaymentMethod(paymentMethodId, updatedPaymentMethod);
-
-        if (!updated) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment method not found");
-        }
-
-        profileCommandService.save(profile);
-        return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(profile));
+    if (!removed) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment method not found");
     }
 
-    @PreAuthorize("hasAuthority('ROLE_SELLER')")
-    @DeleteMapping("/me/payment-methods/delete/{paymentMethodId}")
-    public ResponseEntity<?> deletePaymentMethod(@PathVariable Long paymentMethodId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        long userId = userDetails.getId();
+    profileCommandService.save(profile);
+    return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(profile));
+  }
 
-        Optional<Profile> profileOptional = profileQueryService.handle(new GetProfileByIdQuery(userId));
-        if (profileOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+  /**
+   * Gets profile by id.
+   *
+   * @param profileId the profile id
+   * @return the profile by id
+   */
+  @GetMapping("/{profileId}")
+  public ResponseEntity<ProfileResource> getProfileById(@PathVariable Long profileId) {
+    var getProfileByIdQuery = new GetProfileByIdQuery(profileId);
+    var profileOptional = profileQueryService.handle(getProfileByIdQuery);
 
-        Profile profile = profileOptional.get();
-        boolean removed = profile.removePaymentMethodById(paymentMethodId);
-
-        if (!removed) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment method not found");
-        }
-
-        profileCommandService.save(profile);
-        return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(profile));
+    if (profileOptional.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(null);
     }
 
-    @GetMapping("/{profileId}")
-    public ResponseEntity<ProfileResource> getProfileById(@PathVariable Long profileId) {
-        var getProfileByIdQuery = new GetProfileByIdQuery(profileId);
-        var profileOptional = profileQueryService.handle(getProfileByIdQuery);
-
-        if (profileOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(null);
-        }
-
-        var profileResource = ProfileResourceFromEntityAssembler.toResourceFromEntity(profileOptional.get());
-        return ResponseEntity.ok(profileResource);
-    }
+    var profileResource =
+        ProfileResourceFromEntityAssembler.toResourceFromEntity(profileOptional.get());
+    return ResponseEntity.ok(profileResource);
+  }
 }

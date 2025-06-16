@@ -1,18 +1,25 @@
 package com.pe.platform.payment.interfaces.acl;
 
-import com.pe.platform.payment.domain.model.commands.CreateSubscriptionCommand;
 import com.pe.platform.payment.domain.services.SubscriptionCommandService;
 import org.springframework.stereotype.Service;
 
+/**
+ * The type Subscription context facade.
+ */
 @Service
 
 public class SubscriptionContextFacade {
-    private final SubscriptionCommandService subscriptionCommandService;
+  private final SubscriptionCommandService subscriptionCommandService;
 
 
-    public SubscriptionContextFacade(SubscriptionCommandService subscriptionCommandService) {
-        this.subscriptionCommandService = subscriptionCommandService;
-    }
+  /**
+   * Instantiates a new Subscription context facade.
+   *
+   * @param subscriptionCommandService the subscription command service
+   */
+  public SubscriptionContextFacade(SubscriptionCommandService subscriptionCommandService) {
+    this.subscriptionCommandService = subscriptionCommandService;
+  }
 
     /*
     *

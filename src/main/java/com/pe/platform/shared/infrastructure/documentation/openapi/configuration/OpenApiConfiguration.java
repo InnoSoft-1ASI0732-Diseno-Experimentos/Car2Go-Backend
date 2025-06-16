@@ -10,35 +10,42 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * The type Open api configuration.
+ */
 @Configuration
 public class OpenApiConfiguration {
-    @Bean
-    public OpenAPI car2goPlatformOpenApi() {
-        // General configuration
-        var openApi = new OpenAPI();
-        openApi
-                .info(new Info()
-                        .title("Car2Go Platform API")
-                        .description("Car2Go application REST API documentation.")
-                        .version("v1.0.0")
-                        .license(new License().name("Apache 2.0")
-                                .url("https://springdoc.org")))
-                .externalDocs(new ExternalDocumentation()
-                        .description("Car2Go Platform wiki Documentation")
-                        .url("https://car2go-platform.wiki.github.io/docs"));
+  /**
+   * Car 2 go platform open api open api.
+   *
+   * @return the open api
+   */
+  @Bean
+  public OpenAPI car2goPlatformOpenApi() {
+    // General configuration
+    var openApi = new OpenAPI();
+    openApi
+        .info(new Info()
+            .title("Car2Go Platform API")
+            .description("Car2Go application REST API documentation.")
+            .version("v1.0.0")
+            .license(new License().name("Apache 2.0")
+                .url("https://springdoc.org")))
+        .externalDocs(new ExternalDocumentation()
+            .description("Car2Go Platform wiki Documentation")
+            .url("https://car2go-platform.wiki.github.io/docs"));
 
-        // Add security scheme
+    // Add security scheme
 
 
+    openApi.addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
+        .components(new Components().addSecuritySchemes("bearerAuth",
+            new SecurityScheme()
+                .name("bearerAuth")
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")));
 
-        openApi.addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
-                .components(new Components().addSecuritySchemes("bearerAuth",
-                                new SecurityScheme()
-                                        .name("bearerAuth")
-                                        .type(SecurityScheme.Type.HTTP)
-                                        .scheme("bearer")
-                                        .bearerFormat("JWT")));
-
-        return openApi;
-    }
+    return openApi;
+  }
 }

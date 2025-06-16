@@ -1,8 +1,23 @@
 package com.pe.platform.iam.domain.model.valueobjects;
 
+/**
+ * The enum Roles.
+ */
 public enum Roles {
-    ROLE_SELLER,
-    ROLE_BUYER,
-    ROLE_MECHANIC,
-    ROLE_ADMIN,
+  /**
+   * Role seller roles.
+   */
+  ROLE_SELLER,
+  /**
+   * Role buyer roles.
+   */
+  ROLE_BUYER,
+  /**
+   * Role mechanic roles.
+   */
+  ROLE_MECHANIC,
+  /**
+   * Role admin roles.
+   */
+  ROLE_ADMIN,
 }

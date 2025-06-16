@@ -1,4 +1,7 @@
 package com.pe.platform.payment.domain.model.queries;
 
-    public record GetSubscriptionByIdQuery(Long id) {
+/**
+ * The type Get subscription by id query.
+ */
+public record GetSubscriptionByIdQuery(Long id) {
 }

@@ -7,97 +7,132 @@ import com.pe.platform.interaction.interfaces.rest.dto.CreateReviewRequest;
 import com.pe.platform.interaction.interfaces.rest.dto.ReviewDTO;
 import com.pe.platform.vehicle.domain.model.aggregates.Vehicle;
 import com.pe.platform.vehicle.domain.services.VehicleCommandService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * The type Review controller.
+ */
 @RestController
 @RequestMapping("/api/v1/reviews")
 public class ReviewController {
 
-    private final VehicleCommandService vehicleCommandService;
-    private final ReviewCommandService reviewCommandService;
+  private final VehicleCommandService vehicleCommandService;
+  private final ReviewCommandService reviewCommandService;
 
-    public ReviewController(VehicleCommandService vehicleCommandService, ReviewCommandService reviewCommandService) {
-        this.vehicleCommandService = vehicleCommandService;
-        this.reviewCommandService = reviewCommandService;
+  /**
+   * Instantiates a new Review controller.
+   *
+   * @param vehicleCommandService the vehicle command service
+   * @param reviewCommandService  the review command service
+   */
+  public ReviewController(VehicleCommandService vehicleCommandService,
+                          ReviewCommandService reviewCommandService) {
+    this.vehicleCommandService = vehicleCommandService;
+    this.reviewCommandService = reviewCommandService;
+  }
+
+  /**
+   * Create review response entity.
+   *
+   * @param reviewRequest the review request
+   * @return the response entity
+   */
+  @PreAuthorize("hasAuthority('ROLE_MECHANIC')")
+  @PostMapping
+  public ResponseEntity<?> createReview(@RequestBody CreateReviewRequest reviewRequest) {
+    int vehicleId = reviewRequest.getVehicleId();
+    String notes = reviewRequest.getNotes();
+    boolean isApproved = reviewRequest.isApproved();
+
+    Optional<Vehicle> vehicleOptional = vehicleCommandService.findById(vehicleId);
+    if (vehicleOptional.isEmpty()) {
+      return ResponseEntity.status(404).body("Vehicle not found");
     }
 
-    @PreAuthorize("hasAuthority('ROLE_MECHANIC')")
-    @PostMapping
-    public ResponseEntity<?> createReview(@RequestBody CreateReviewRequest reviewRequest) {
-        int vehicleId = reviewRequest.getVehicleId();
-        String notes = reviewRequest.getNotes();
-        boolean isApproved = reviewRequest.isApproved();
-
-        Optional<Vehicle> vehicleOptional = vehicleCommandService.findById(vehicleId);
-        if (vehicleOptional.isEmpty()) {
-            return ResponseEntity.status(404).body("Vehicle not found");
-        }
-
-        if (reviewCommandService.getReviewByVehicleId(vehicleId).isPresent()) {
-            return ResponseEntity.status(400).body("Review already exists for this vehicle");
-        }
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        String reviewedBy = String.valueOf(userDetails.getId());
-
-        Review newReview = reviewCommandService.createReview(vehicleId, reviewedBy, notes, isApproved);
-        ReviewDTO reviewDTO = new ReviewDTO(newReview);
-
-        return ResponseEntity.ok(reviewDTO);
+    if (reviewCommandService.getReviewByVehicleId(vehicleId).isPresent()) {
+      return ResponseEntity.status(400).body("Review already exists for this vehicle");
     }
 
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    String reviewedBy = String.valueOf(userDetails.getId());
+
+    Review newReview = reviewCommandService.createReview(vehicleId, reviewedBy, notes, isApproved);
+    ReviewDTO reviewDTO = new ReviewDTO(newReview);
+
+    return ResponseEntity.ok(reviewDTO);
+  }
 
 
-    @PreAuthorize("hasAuthority('ROLE_MECHANIC')")
-    @GetMapping("/{carId}")
-    public ResponseEntity<ReviewDTO> getReviewByCarId(@PathVariable("carId") int carId) {
-        Optional<Review> review = reviewCommandService.getReviewByVehicleId(carId);
+  /**
+   * Gets review by car id.
+   *
+   * @param carId the car id
+   * @return the review by car id
+   */
+  @PreAuthorize("hasAuthority('ROLE_MECHANIC')")
+  @GetMapping("/{carId}")
+  public ResponseEntity<ReviewDTO> getReviewByCarId(@PathVariable("carId") int carId) {
+    Optional<Review> review = reviewCommandService.getReviewByVehicleId(carId);
 
-        if (review.isEmpty()) {
-            return ResponseEntity.status(404).body(null);
-        }
-
-        ReviewDTO reviewDTO = new ReviewDTO(review.get());
-        return ResponseEntity.ok(reviewDTO);
+    if (review.isEmpty()) {
+      return ResponseEntity.status(404).body(null);
     }
 
-    @PreAuthorize("hasAuthority('ROLE_MECHANIC')")
-    @GetMapping
-    public ResponseEntity<List<ReviewDTO>> getAllReviews() {
-        List<Review> reviews = reviewCommandService.getAllReviews();
+    ReviewDTO reviewDTO = new ReviewDTO(review.get());
+    return ResponseEntity.ok(reviewDTO);
+  }
 
-        List<ReviewDTO> reviewDTOs = reviews.stream()
-                .map(ReviewDTO::new)
-                .collect(Collectors.toList());
+  /**
+   * Gets all reviews.
+   *
+   * @return the all reviews
+   */
+  @PreAuthorize("hasAuthority('ROLE_MECHANIC')")
+  @GetMapping
+  public ResponseEntity<List<ReviewDTO>> getAllReviews() {
+    List<Review> reviews = reviewCommandService.getAllReviews();
 
-        return ResponseEntity.ok(reviewDTOs);
-    }
+    List<ReviewDTO> reviewDTOs = reviews.stream()
+        .map(ReviewDTO::new)
+        .collect(Collectors.toList());
 
-    @PreAuthorize("hasAuthority('ROLE_MECHANIC')")
-    @GetMapping("/me")
-    public ResponseEntity<List<ReviewDTO>> getMyReviews() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        String userId = String.valueOf(userDetails.getId());
+    return ResponseEntity.ok(reviewDTOs);
+  }
 
-        List<Review> reviews = reviewCommandService.getAllReviews().stream()
-                .filter(review -> userId.equals(review.getReviewedBy()))
-                .toList();
+  /**
+   * Gets my reviews.
+   *
+   * @return the my reviews
+   */
+  @PreAuthorize("hasAuthority('ROLE_MECHANIC')")
+  @GetMapping("/me")
+  public ResponseEntity<List<ReviewDTO>> getMyReviews() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+    String userId = String.valueOf(userDetails.getId());
 
-        List<ReviewDTO> reviewDTOs = reviews.stream()
-                .map(ReviewDTO::new)
-                .collect(Collectors.toList());
+    List<Review> reviews = reviewCommandService.getAllReviews().stream()
+        .filter(review -> userId.equals(review.getReviewedBy()))
+        .toList();
 
-        return ResponseEntity.ok(reviewDTOs);
-    }
+    List<ReviewDTO> reviewDTOs = reviews.stream()
+        .map(ReviewDTO::new)
+        .collect(Collectors.toList());
+
+    return ResponseEntity.ok(reviewDTOs);
+  }
 
 }

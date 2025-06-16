@@ -1,14 +1,28 @@
 package com.pe.platform.iam.domain.services;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-
 import com.pe.platform.iam.domain.model.aggregates.User;
 import com.pe.platform.iam.domain.model.commands.SignInCommand;
 import com.pe.platform.iam.domain.model.commands.SignUpCommand;
-
 import java.util.Optional;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
+/**
+ * The interface User command service.
+ */
 public interface UserCommandService {
-    Optional<User> handle(SignUpCommand command);
-    Optional<ImmutablePair<User, String>> handle(SignInCommand command);
+  /**
+   * Handle optional.
+   *
+   * @param command the command
+   * @return the optional
+   */
+  Optional<User> handle(SignUpCommand command);
+
+  /**
+   * Handle optional.
+   *
+   * @param command the command
+   * @return the optional
+   */
+  Optional<ImmutablePair<User, String>> handle(SignInCommand command);
 }

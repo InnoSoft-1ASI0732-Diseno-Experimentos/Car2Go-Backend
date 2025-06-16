@@ -1,8 +1,10 @@
 package com.pe.platform.iam.domain.model.commands;
 
+import com.pe.platform.iam.domain.model.entities.Role;
 import java.util.List;
 
-import com.pe.platform.iam.domain.model.entities.Role;
-
+/**
+ * The type Sign up command.
+ */
 public record SignUpCommand(String username, String password, List<Role> roles) {
 }
