@@ -14,19 +14,21 @@ public class VehiclePublicationSteps {
 
     @Given("el vendedor tiene la sesión iniciada con rol SELLER")
     public void vendedorConSesionIniciada() {
-        // Suponiendo uso de JWT autenticado
-        String jwtToken = "Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJSYXNlYyIsImlhdCI6MTc0NzIwODI3MCwiZXhwIjoxNzQ3ODEzMDcwfQ.nG4wl0PzNf7DJxwTeywsMmUnVHNtGRv9-WptLAI43N6YZnXnYau7B0qJuFJQCST8"; // token válido con ROLE_SELLER
+        System.out.println("✅ [GIVEN] Vendedor autenticado correctamente con rol SELLER.");
+        String jwtToken = "Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJSYXNlYyIsImlhdCI6MTc0NzUzNzE2NSwiZXhwIjoxNzQ4MTQxOTY1fQ.vBc7AOCbYExlVNMiHI9I3apxOSgP8jLq3_Q2UDNPHLZuL1HqeddjGmVlrDDn96JW";
         headers.set("Authorization", jwtToken);
         headers.setContentType(MediaType.APPLICATION_JSON);
     }
 
     @Given("el vendedor tiene acceso a la sección {string}")
     public void accesoASeccion(String seccion) {
+        System.out.println("🔁 [GIVEN] Accediendo a la sección: " + seccion);
         assertEquals("Publicar Auto", seccion);
     }
 
     @When("envía una solicitud POST a {string} con los siguientes datos del auto:")
     public void enviaSolicitudPostConDatos(String endpoint, Map<String, String> datos) {
+        System.out.println("📤 [WHEN] Enviando solicitud POST a " + endpoint);
         String json = """
         {
           "name": "%s", "phone": "%s", "email": "%s", "brand": "%s",
@@ -48,16 +50,21 @@ public class VehiclePublicationSteps {
         HttpEntity<String> request = new HttpEntity<>(json, headers);
         RestTemplate restTemplate = new RestTemplate();
         response = restTemplate.postForEntity(baseUrl, request, String.class);
+        System.out.println("✅ [WHEN] Solicitud enviada. Código de respuesta: " + response.getStatusCodeValue());
     }
 
     @Then("la API responde con estado {int} \\({word})")
     public void laApiRespondeConEstado(int statusCode, String statusName) {
+        System.out.println("📥 [THEN] Verificando respuesta: HTTP " + statusCode + " (" + statusName + ")");
         assertEquals(statusCode, response.getStatusCodeValue());
+        System.out.println("✅ [THEN] Código de estado verificado correctamente.");
     }
 
     @Then("el vehículo queda registrado con estado {word}")
     public void vehiculoRegistradoConEstado(String estadoEsperado) {
+        System.out.println("🔍 [THEN] Verificando estado del vehículo: " + estadoEsperado);
         assertTrue(response.getBody().contains("\"status\":\"" + estadoEsperado + "\""));
+        System.out.println("✅ [THEN] Estado del vehículo registrado correctamente como " + estadoEsperado);
     }
 
     private String formatImageList(String imagesCsv) {
